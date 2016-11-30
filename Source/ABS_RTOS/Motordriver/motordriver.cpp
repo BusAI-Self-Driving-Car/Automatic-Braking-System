@@ -51,7 +51,7 @@ float Motor::speed(float speed) {
     if (sign == 0) {
         _fwd = (speed > 0.0);
         _rev = (speed < 0.0);
-        temp = abs((int)speed);
+        temp = abs(speed);
         _pwm = temp;
     } else if (sign == 1) {
         if (speed < 0) {
@@ -62,7 +62,7 @@ float Motor::speed(float speed) {
        } else {
             _fwd = (speed > 0.0);
             _rev = (speed < 0.0);
-            temp = abs((int)speed);
+            temp = abs(speed);
             _pwm = temp;
         }
     } else if (sign == -1) {
@@ -74,7 +74,7 @@ float Motor::speed(float speed) {
         } else {
             _fwd = (speed > 0.0);
             _rev = (speed < 0.0);
-            temp = abs((int)speed);
+            temp = abs(speed);
             _pwm = temp;
         }
     }

@@ -14,112 +14,84 @@ Motor A(PTA5, PTC5, PTC4 , 1); // pwm, fwd, rev, can brake
 Motor B(PTD5, PTC13, PTC12, 1); // pwm, fwd, rev, can brake
 
 unsigned int dist, b;
-//DigitalOut led1(LED1);
-//InterruptIn sw2(SW2);
-//uint32_t button_pressed;
-//Thread *thread1;
 Thread *thread2;
 
-/*
-void sw2_press(void)
-{
-    thread2->signal_set(0x1);
-}
 
-void led_thread(void const *argument)
-{
-    while (true) {
-        led1 = !led1;
-        Thread::wait(1000);
-    }
-}
-
-void button_thread(void const *argument)
-{
-    while (true) {
-        Thread::signal_wait(0x1);
-        button_pressed++;
-    }
-}
-
-int main()
-{
-    Thread thread(led_thread);
-    thread2 = new Thread(button_thread);
-
-    button_pressed = 0;
-    sw2.fall(&sw2_press);
-    while (true) {
-        Thread::wait(5000);
-        printf("SW2 was pressed (last 5 seconds): %d \n", button_pressed);
-        fflush(stdout);
-        button_pressed = 0;
-    }
-}
-
-*/
 
 void detect_obstacle();
 void drive_motor();
 
+/*
+This is thread function  Sensor module of ABS
+*/
 void detect_obstacle()
 {
-        pc.printf("%d\r\n",dist);
-        int a=0;
+        
+        static int a=0;
         while(1){
-            pc.printf("%d\r\n",dist);
+            
             usensor.start();
-            wait_ms(500); 
+            wait_ms(200); 
             dist=usensor.get_dist_cm();
-            while ( dist < 6 ) {
-                pc.printf("%d\r\n",dist);
+            while ( dist < 12 ) {
+                pc.printf("dist = %d %d\r\n",dist,a);
                 a++;
                 if ( a == 5 ) {
                     b = 1;
                     a = 0;
+                    break;
                     }
-                }
-                a = 0;    
+            }
+            a = 0;    
                 
-            pc.printf("%d\r\n",dist);
+            pc.printf("dist: %d\r\n",dist);
         }
 }
 
+/*
+This is thread function for drive motor Module of ABS
+It uses Bluetooth serial interface to transfer data from mobile to app
+to microcontroller
+*/
 void drive_motor()
 {
     unsigned char inp;
     
     while(1) {
-    pc.printf("In drive motor\r\n");        
+    //pc.printf("interrupt %d\r\n", b);        
     if(blue.readable()>0) {
             inp=blue.getc();
-            if ( b == 1 ) {
-                inp = 'B';
-                b = 0;
-            }
+            
         }
+    if ( b == 1 ) {
+                inp = 'E';
+                b = 0;
+            }        
+    
+   
+    pc.printf("Input key : %c %d\r\n",inp,b);        
     switch(inp) {    
          
-        case 'S':
+        case 'A':
             A.speed(255);
             B.speed(255);
             break;
-        case 'R':
+        case 'D':
             A.speed(255);
             B.speed(0);
             break;        
-        case 'L':
+        case 'C':
             A.speed(0);
             B.speed(255);
             break;        
-        case 'B':
+        case 'E':
             A.speed(0);
             B.speed(0);
             wait(1);
             A.coast();
             B.coast();
             break;            
-        case 'I':
+        case 'B':
             A.speed(-255);
             B.speed(-255);
             break;            
@@ -130,6 +102,10 @@ void drive_motor()
     }
 }
 
+/*
+
+*/
+
 int main ()
 {
     blue.baud(9600);
@@ -138,6 +114,7 @@ int main ()
     while (true) {
         Thread::wait(5000);
         pc.printf("Obstacle detected at %d cm \r\n",dist);
+        blue.putc(dist);
         fflush(stdout);
         }
 }
